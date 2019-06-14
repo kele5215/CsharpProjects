@@ -37,7 +37,7 @@ namespace LogForRestartSr
         /// <summary>
         /// 指定キー
         /// </summary>
-        private const string REGEX = @"Ami.Communication.Web.Services.Recognition.Queue Warning: 36175";
+        private const string REGEX = @"Warning: 36175";
 
         /// <summary>
         /// 指定検索内容情報
