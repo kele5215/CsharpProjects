@@ -1,0 +1,137 @@
+﻿<Page x:Class="Internationalization.Page1"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:my="clr-namespace:Ami.UI.View.UserControls;assembly=Ami.UI.View"
+      mc:Ignorable="d" 
+      d:DesignHeight="900" d:DesignWidth="800"
+      Background="Bisque"
+      Title="Page1">
+
+    <Page.Resources>
+        <Style x:Key="NumericStyle" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+    </Page.Resources>
+    <Grid Name="gridMain">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="30*"/>
+            <ColumnDefinition Width="70*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Grid.Row="0">
+            <DockPanel>
+                <Border>
+                    <my:AmiTreeViewControl x:Name="amiTreeView" />
+                </Border>
+            </DockPanel>
+        </Grid>
+        <GridSplitter Width="5"></GridSplitter>
+        <Grid Name="gridRightColumn" Grid.Row="0" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="200"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Column="0" Grid.Row="0">
+                <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <GroupBox Header="既存情報(中国語)" Height="Auto">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="既存中国語フォルダ" HorizontalAlignment="Left"  VerticalAlignment="Top" Width="108"/>
+                                <TextBox HorizontalAlignment="Left" Height="25"  TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="351" Name="txtExistChFolder"/>
+                                <Button Content="既存中国語フォルダ選択" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Top" Width="140" Name="btnExistChFolder" Click="existFolder_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <GroupBox Header="既存情報(日本語)" Height="Auto">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="既存日本語フォルダ" HorizontalAlignment="Left"  VerticalAlignment="Top" Width="108"/>
+                                <TextBox HorizontalAlignment="Left" Height="25"  TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="351" Name="txtExistJpFolder"/>
+                                <Button Content="既存日本語フォルダ選択" HorizontalAlignment="Left" Height="25"  VerticalAlignment="Top" Width="140" Name="btnExistJpFolder" Click="existFolder_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <GroupBox Header="出力情報選択" Height="Auto">
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="出力フォルダ" HorizontalAlignment="Left" VerticalAlignment="Top" Width="108"/>
+                                <TextBox HorizontalAlignment="Left" Height="25" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="351" Name="txtOutFolder"/>
+                                <Button Content="出力フォルダ選択" HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="140" Name="btnOutFolder" Click="existFolder_Click"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Resourcesファイル照会" HorizontalAlignment="Left" Height="33" VerticalAlignment="Top" Width="122" Name="ResourcesFileSel" Click="ResourcesFileSel_Click"/>
+                            <Button Content="Resourcesファイル表示" HorizontalAlignment="Left" Height="33" VerticalAlignment="Top" Width="122" Name="ResourcesFileShow" Click="ResourcesFileShow_Click"/>
+                            <Button Content="Resourcesファイル切替" HorizontalAlignment="Left" Height="33" VerticalAlignment="Top" Width="122" Name="ResourcesFileReplace" Click="ResourcesFileReplace_Click"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <GridSplitter Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"></GridSplitter>
+
+            <Grid Grid.Column="0" Grid.Row="1">
+                <!--<StackPanel Orientation="Vertical" VerticalAlignment="Top">-->
+                <DataGrid Name="dataGrid1" AutoGenerateColumns="False"
+                              HorizontalAlignment="Stretch" ItemsSource="{Binding}"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              AlternationCount="2">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="{x:Type DataGridRow}">
+                            <Style.Triggers>
+                                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
+                                    <Setter Property="Background" Value="SeaShell"/>
+                                </Trigger>
+                                <Trigger Property="ItemsControl.AlternationIndex"
+                         Value="1">
+                                    <Setter Property="Background" Value="#FFF2F2F2" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn
+                                x:Name="col_item_key"
+                                Header="key名"
+                                Binding="{Binding item_key}"
+                                Width="1*" 
+                            />
+                        <DataGridTextColumn
+                                x:Name="col_item_index"
+                                Header="番号"
+                                Binding="{Binding item_index}"
+                                ElementStyle="{StaticResource NumericStyle}"
+                                IsReadOnly="True"
+                                Width="0.5*"
+                            />
+                        <DataGridTextColumn
+                                x:Name="col_ch_content"
+                                Header="中国語内容"
+                                Binding="{Binding item_ch_content}"
+                                IsReadOnly="True"
+                                Width="2*"
+                            />
+                        <DataGridTextColumn
+                                x:Name="col_jp_content"
+                                Header="日本語内容"
+                                Binding="{Binding item_jp_content}"
+                                IsReadOnly="True"
+                                Width="2*"
+                            />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <!--</StackPanel>-->
+            </Grid>
+
+
+        </Grid>
+    </Grid>
+</Page>

@@ -1,0 +1,14 @@
+<publishData>
+  <publishTarget publishUrl="http://localhost/JapaneseDectector/">
+    <file relUrl="bin/JapaneseDectector.dll" publishTime="02/02/2015 09:59:17" />
+    <file relUrl="Default.aspx" publishTime="02/02/2015 10:18:57" />
+    <file relUrl="bin/JapaneseDectector.pdb" publishTime="02/02/2015 09:59:17" />
+    <file relUrl="Web.config" publishTime="01/08/2015 15:24:31" />
+  </publishTarget>
+  <publishTarget publishUrl="http://localhost/">
+    <file relUrl="bin/JapaneseDectector.dll" publishTime="01/26/2015 16:53:28" />
+    <file relUrl="Default.aspx" publishTime="01/26/2015 16:46:50" />
+    <file relUrl="bin/JapaneseDectector.pdb" publishTime="01/26/2015 16:53:28" />
+    <file relUrl="Web.config" publishTime="01/08/2015 15:24:31" />
+  </publishTarget>
+</publishData>
