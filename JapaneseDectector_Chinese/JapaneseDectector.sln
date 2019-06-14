@@ -5,8 +5,6 @@ VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JapaneseDectector", "JapaneseDectector\JapaneseDectector.csproj", "{9FE4CC52-E604-4A53-B616-AAAFED84C369}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApplication1", "ConsoleApplication1\ConsoleApplication1.csproj", "{F24D5E2E-8E42-4B3C-BCE7-F4F949400379}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{9FE4CC52-E604-4A53-B616-AAAFED84C369}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FE4CC52-E604-4A53-B616-AAAFED84C369}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FE4CC52-E604-4A53-B616-AAAFED84C369}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F24D5E2E-8E42-4B3C-BCE7-F4F949400379}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F24D5E2E-8E42-4B3C-BCE7-F4F949400379}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F24D5E2E-8E42-4B3C-BCE7-F4F949400379}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F24D5E2E-8E42-4B3C-BCE7-F4F949400379}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
