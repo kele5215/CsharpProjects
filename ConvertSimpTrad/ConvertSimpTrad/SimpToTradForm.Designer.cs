@@ -47,6 +47,7 @@
             this.txtExistChFolder = new System.Windows.Forms.TextBox();
             this.btnExistFolder = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.chkJs = new System.Windows.Forms.CheckBox();
             this.chkIss = new System.Windows.Forms.CheckBox();
             this.chkSql = new System.Windows.Forms.CheckBox();
             this.chkResx = new System.Windows.Forms.CheckBox();
@@ -59,7 +60,6 @@
             this.txtResxFileCnt = new System.Windows.Forms.TextBox();
             this.txtSqlFileCnt = new System.Windows.Forms.TextBox();
             this.txtIssFileCnt = new System.Windows.Forms.TextBox();
-            this.chkJs = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtJsFileCnt = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
@@ -86,7 +86,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(12, 197);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 23;
-            this.dataGridView1.Size = new System.Drawing.Size(817, 314);
+            this.dataGridView1.Size = new System.Drawing.Size(1280, 768);
             this.dataGridView1.TabIndex = 0;
             this.dataGridView1.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellClick);
             // 
@@ -162,7 +162,7 @@
             // 
             // btnExcel
             // 
-            this.btnExcel.Location = new System.Drawing.Point(754, 517);
+            this.btnExcel.Location = new System.Drawing.Point(1217, 983);
             this.btnExcel.Name = "btnExcel";
             this.btnExcel.Size = new System.Drawing.Size(75, 23);
             this.btnExcel.TabIndex = 1;
@@ -213,6 +213,16 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "ファイル情報";
             // 
+            // chkJs
+            // 
+            this.chkJs.AutoSize = true;
+            this.chkJs.Location = new System.Drawing.Point(297, 53);
+            this.chkJs.Name = "chkJs";
+            this.chkJs.Size = new System.Drawing.Size(40, 16);
+            this.chkJs.TabIndex = 5;
+            this.chkJs.Text = ".JS";
+            this.chkJs.UseVisualStyleBackColor = true;
+            // 
             // chkIss
             // 
             this.chkIss.AutoSize = true;
@@ -262,6 +272,7 @@
             this.btnSimpToTw.TabIndex = 7;
             this.btnSimpToTw.Text = "繁体转换";
             this.btnSimpToTw.UseVisualStyleBackColor = true;
+            this.btnSimpToTw.Click += new System.EventHandler(this.btnSimpToTw_Click);
             // 
             // btnTwFileMake
             // 
@@ -339,16 +350,6 @@
             this.txtIssFileCnt.Text = "0";
             this.txtIssFileCnt.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
-            // chkJs
-            // 
-            this.chkJs.AutoSize = true;
-            this.chkJs.Location = new System.Drawing.Point(297, 53);
-            this.chkJs.Name = "chkJs";
-            this.chkJs.Size = new System.Drawing.Size(40, 16);
-            this.chkJs.TabIndex = 5;
-            this.chkJs.Text = ".JS";
-            this.chkJs.UseVisualStyleBackColor = true;
-            // 
             // label5
             // 
             this.label5.AutoSize = true;
@@ -375,7 +376,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 729);
+            this.ClientSize = new System.Drawing.Size(1904, 1041);
             this.Controls.Add(this.txtJsFileCnt);
             this.Controls.Add(this.txtIssFileCnt);
             this.Controls.Add(this.txtSqlFileCnt);
@@ -390,7 +391,7 @@
             this.Controls.Add(this.dataGridView1);
             this.Name = "ConvertSimpTrad";
             this.Text = "ConvertSimpTrad";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.SimpToTrad_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();

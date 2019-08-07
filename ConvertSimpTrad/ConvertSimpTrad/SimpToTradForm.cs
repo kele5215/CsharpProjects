@@ -13,7 +13,9 @@ namespace ConvertSimpTrad
 
         private List<string> lstFileFormat = new List<string>();
 
-        private List<string> lstFiles = new List<string>();
+        private List<string> lstResxFiles = new List<string>();
+        private List<string> lstIssFiles = new List<string>();
+        private List<string> lstJsFiles = new List<string>();
 
 
         public ConvertSimpTrad()
@@ -21,9 +23,9 @@ namespace ConvertSimpTrad
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void SimpToTrad_Load(object sender, EventArgs e)
         {
-            DataGridBing(GetDataTable());
+            //DataGridBing(GetDataTable());
         }
 
         #region イベント処理
@@ -105,6 +107,45 @@ namespace ConvertSimpTrad
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+        }
+
+        #endregion
+
+        #region 繁体内容変換処理
+
+        private void btnSimpToTw_Click(object sender, EventArgs e)
+        {
+
+            int girdDataIndex = 0;
+
+            GetDataTable();
+
+            // RESXファイル変換処理
+            foreach (string resxFile in lstResxFiles)
+            {
+                ResourceLanguage resxCnFileContent = new ResourceLanguage(resxFile);
+                ResourceLanguage resxTwFileContent = new ResourceLanguage(resxFile.Replace("zh-CN", "zh-TW"));
+
+                // girdDataIndex初期化
+                girdDataIndex = 0;
+                foreach (string itemKey in resxCnFileContent.ResourceKeys)
+                {
+                    // ファイル内容をGirdデータに追加
+                    DataRow newRowItem;
+                    newRowItem = fileItemTable.NewRow();
+                    newRowItem["item_parent_id"] = doParentId(resxFile);
+                    newRowItem["item_key"] = itemKey;
+                    newRowItem["item_index"] = girdDataIndex + 1;
+                    newRowItem["item_simp_content"] = resxCnFileContent.GetValue(itemKey);
+                    newRowItem["item_trad_content"] = resxTwFileContent.GetValue(itemKey);
+                    newRowItem["item_file_path"] = resxFile;
+
+                    fileItemTable.Rows.Add(newRowItem);
+                    girdDataIndex++;
+                }
+            }
+
+            DataGridBing(fileItemTable);
         }
 
         #endregion
@@ -237,45 +278,45 @@ namespace ConvertSimpTrad
             fileItemTable.Columns.Add(new DataColumn("item_file_path", typeof(string)));
 
 
-            DataRow dr = fileItemTable.NewRow();
-            dr["ID"] = 1;
-            dr["item_file_path"] = "item_file_path_1";
-            dr["item_parent_id"] = "item_parent_id_1";
-            dr["item_key"] = "item_key_1";
-            dr["item_index"] = 1;
-            dr["item_simp_content"] = "item_simp_content_1";
-            dr["item_trad_content"] = "item_trad_content_1";
-            fileItemTable.Rows.Add(dr);
+            //DataRow dr = fileItemTable.NewRow();
+            //dr["ID"] = 1;
+            //dr["item_file_path"] = "item_file_path_1";
+            //dr["item_parent_id"] = "item_parent_id_1";
+            //dr["item_key"] = "item_key_1";
+            //dr["item_index"] = 1;
+            //dr["item_simp_content"] = "item_simp_content_1";
+            //dr["item_trad_content"] = "item_trad_content_1";
+            //fileItemTable.Rows.Add(dr);
 
-            dr = fileItemTable.NewRow();
-            dr["ID"] = 2;
-            dr["item_file_path"] = "item_file_path_1";
-            dr["item_parent_id"] = "item_parent_id_1";
-            dr["item_key"] = "item_key_2";
-            dr["item_index"] = 2;
-            dr["item_simp_content"] = "item_simp_content_2";
-            dr["item_trad_content"] = "item_trad_content_2";
-            fileItemTable.Rows.Add(dr);
+            //dr = fileItemTable.NewRow();
+            //dr["ID"] = 2;
+            //dr["item_file_path"] = "item_file_path_1";
+            //dr["item_parent_id"] = "item_parent_id_1";
+            //dr["item_key"] = "item_key_2";
+            //dr["item_index"] = 2;
+            //dr["item_simp_content"] = "item_simp_content_2";
+            //dr["item_trad_content"] = "item_trad_content_2";
+            //fileItemTable.Rows.Add(dr);
 
-            dr = fileItemTable.NewRow();
-            dr["ID"] = 3;
-            dr["item_file_path"] = "item_file_path_2";
-            dr["item_parent_id"] = "item_parent_id_2";
-            dr["item_key"] = "item_key_3";
-            dr["item_index"] = 1;
-            dr["item_simp_content"] = "item_simp_content_3";
-            dr["item_trad_content"] = "item_trad_content_3";
-            fileItemTable.Rows.Add(dr);
+            //dr = fileItemTable.NewRow();
+            //dr["ID"] = 3;
+            //dr["item_file_path"] = "item_file_path_2";
+            //dr["item_parent_id"] = "item_parent_id_2";
+            //dr["item_key"] = "item_key_3";
+            //dr["item_index"] = 1;
+            //dr["item_simp_content"] = "item_simp_content_3";
+            //dr["item_trad_content"] = "item_trad_content_3";
+            //fileItemTable.Rows.Add(dr);
 
-            dr = fileItemTable.NewRow();
-            dr["ID"] = 4;
-            dr["item_file_path"] = "item_file_path_2";
-            dr["item_parent_id"] = "item_parent_id_2";
-            dr["item_key"] = "item_key_4";
-            dr["item_index"] = 2;
-            dr["item_simp_content"] = "item_simp_content_4";
-            dr["item_trad_content"] = "item_trad_content_4";
-            fileItemTable.Rows.Add(dr);
+            //dr = fileItemTable.NewRow();
+            //dr["ID"] = 4;
+            //dr["item_file_path"] = "item_file_path_2";
+            //dr["item_parent_id"] = "item_parent_id_2";
+            //dr["item_key"] = "item_key_4";
+            //dr["item_index"] = 2;
+            //dr["item_simp_content"] = "item_simp_content_4";
+            //dr["item_trad_content"] = "item_trad_content_4";
+            //fileItemTable.Rows.Add(dr);
 
             return fileItemTable;
         }
@@ -294,6 +335,18 @@ namespace ConvertSimpTrad
             }
 
             return childRowDt;
+        }
+
+        private string doParentId(string resxFile)
+        {
+            string strParentId = string.Empty;
+
+            FileInfo fileInfo = new FileInfo(resxFile);
+            string fileNm = Path.GetFileNameWithoutExtension(resxFile);
+            strParentId = fileInfo.Directory.FullName.Replace(txtExistChFolder.Text, "") + @"\" + fileNm;
+            strParentId = strParentId.Replace(@"\",@"_").Substring(1);
+
+            return strParentId;
         }
 
         //绑定GRID数据
@@ -348,7 +401,7 @@ namespace ConvertSimpTrad
 
         }
 
-        private void GetFilesMostDeep(string path, ref int resxFileCnt, ref int issFileCnt,ref int jsFileCnt)
+        private void GetFilesMostDeep(string path, ref int resxFileCnt, ref int issFileCnt, ref int jsFileCnt)
         {
             if (!string.IsNullOrEmpty(path))
             {
@@ -359,20 +412,21 @@ namespace ConvertSimpTrad
                     {
                         if (fp.Contains("zh-CN") && !".SQL".Equals(strDot))
                         {
-                            lstFiles.Add(fp);
-
                             makeZhTwFile(fp);
 
                             if (".ISS".Equals(strDot))
                             {
+                                lstIssFiles.Add(fp);
                                 issFileCnt += 1;
                             }
                             else if (".RESX".Equals(strDot))
                             {
+                                lstResxFiles.Add(fp);
                                 resxFileCnt += 1;
                             }
                             else if (".JS".Equals(strDot))
                             {
+                                lstJsFiles.Add(fp);
                                 jsFileCnt += 1;
                             }
                         }
