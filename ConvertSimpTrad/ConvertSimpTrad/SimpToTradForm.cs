@@ -1,8 +1,12 @@
-﻿using System;
+﻿using Microsoft.Office.Interop.Word;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace ConvertSimpTrad
@@ -30,9 +34,9 @@ namespace ConvertSimpTrad
 
         #region イベント処理
 
-        #region 既存プログラムフォルダ選択処理
+        #region フォルダ選択処理
 
-        private void existFolder_Click(object sender, EventArgs e)
+        private void folder_Click(object sender, EventArgs e)
         {
             // フォルダー参照ダイアログのインスタンスを生成
             var dlg = new System.Windows.Forms.FolderBrowserDialog();
@@ -50,11 +54,11 @@ namespace ConvertSimpTrad
                     // 選択されたフォルダーパスをメッセージボックスに表示
                     txtExistChFolder.Text = dlg.SelectedPath;
                 }
-                //else if ("btnExistJpFolder".Equals(btn.Name))
-                //{
-                //    // 選択されたフォルダーパスをメッセージボックスに表示
-                //    txtExistChFolder.Text = dlg.SelectedPath;
-                //}
+                else if ("btnOutFolderSel".Equals(btn.Name))
+                {
+                    // 選択されたフォルダーパスをメッセージボックスに表示
+                    txtOutFolder.Text = dlg.SelectedPath;
+                }
                 //else
                 //{
                 //    // 選択されたフォルダーパスをメッセージボックスに表示
@@ -79,6 +83,17 @@ namespace ConvertSimpTrad
             {
                 getSelectedFileType();
 
+                if (lstFileFormat.Count == 0)
+                {
+                    //メッセージボックスを表示する
+                    MessageBox.Show("少なくとも1つのファイルタイプを選択してください。",
+                        "警告",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    return;
+                }
+
                 GetFilesMostDeep(strRootPath, ref resxFileCnt, ref issFileCnt, ref jsFileCnt);
 
                 // sqlファイル名には「zh-cn」を含めていないので、
@@ -98,6 +113,9 @@ namespace ConvertSimpTrad
                     "正常完了",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
+
+                btnSimpToTw.Enabled = true;
+
             }
             catch (Exception ex)
             {
@@ -117,35 +135,242 @@ namespace ConvertSimpTrad
         {
 
             int girdDataIndex = 0;
+            int resxItemCnt = 0;
 
-            GetDataTable();
-
-            // RESXファイル変換処理
-            foreach (string resxFile in lstResxFiles)
+            if (lstFileFormat.Count == 0)
             {
-                ResourceLanguage resxCnFileContent = new ResourceLanguage(resxFile);
-                ResourceLanguage resxTwFileContent = new ResourceLanguage(resxFile.Replace("zh-CN", "zh-TW"));
-
-                // girdDataIndex初期化
-                girdDataIndex = 0;
-                foreach (string itemKey in resxCnFileContent.ResourceKeys)
-                {
-                    // ファイル内容をGirdデータに追加
-                    DataRow newRowItem;
-                    newRowItem = fileItemTable.NewRow();
-                    newRowItem["item_parent_id"] = doParentId(resxFile);
-                    newRowItem["item_key"] = itemKey;
-                    newRowItem["item_index"] = girdDataIndex + 1;
-                    newRowItem["item_simp_content"] = resxCnFileContent.GetValue(itemKey);
-                    newRowItem["item_trad_content"] = resxTwFileContent.GetValue(itemKey);
-                    newRowItem["item_file_path"] = resxFile;
-
-                    fileItemTable.Rows.Add(newRowItem);
-                    girdDataIndex++;
-                }
+                MessageBox.Show("少なくとも1つのファイルタイプを選択してください");
+                return;
             }
 
-            DataGridBing(fileItemTable);
+            try
+            {
+                //*********************************
+                // 初始化非托管资源
+                //*********************************
+                _Application appWord = new Microsoft.Office.Interop.Word.Application();
+                object template = Missing.Value;
+                object newTemplate = Missing.Value;
+                object docType = Missing.Value;
+                object visible = true;
+                Document doc = appWord.Documents.Add(ref template, ref newTemplate, ref docType, ref visible);
+
+                // ファイル操作用
+                StreamReader reader = null;
+                StreamWriter writer = null;
+
+                // ファイルの１行
+                string strReplaceLine = string.Empty;
+
+                //BOM無しのUTF8でテキストファイルを作成する
+                System.Text.Encoding enc = new System.Text.UTF8Encoding(false);
+
+
+                try
+                {
+                    // RESXファイル変換処理
+                    foreach (string resxFile in lstResxFiles)
+                    {
+                        ResourceLanguage resxCnFileContent = new ResourceLanguage(resxFile);
+                        ResourceLanguage resxTwFileContent = new ResourceLanguage(resxFile.Replace("zh-CN", "zh-TW"));
+                        foreach (string itemKey in resxCnFileContent.ResourceKeys)
+                        {
+                            if (string.IsNullOrEmpty(resxCnFileContent.GetValue(itemKey)))
+                            {
+                                continue;
+                            }
+                            resxTwFileContent.SetValue(itemKey, CHSToCHT(resxCnFileContent.GetValue(itemKey), appWord, doc));
+                            resxTwFileContent.Save();
+
+                            resxItemCnt += 1;
+                        }
+                    }
+
+                    // ISSファイル変換処理
+                    foreach (string issFile in lstIssFiles)
+                    {
+                        //FileStream fs = new FileStream(issFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        //using (reader = new StreamReader(fs, Encoding.GetEncoding("UTF-8")))
+                        //{
+                        //    using (writer = new StreamWriter(issFile, false, enc))
+                        //    {
+                        //        strReplaceLine = string.Empty;
+                        //        string line = string.Empty;
+
+                        //        // 読み取り可能文字が存在しない(ファイルの末尾に到着)すると-1が返される
+                        //        //while ((line = reader.ReadLine()) != null)
+                        //        //{
+                        //        //    // 1行ずつ読み込む指定文字列を置換する
+                        //        //    // この時改行コードはWindows標準のCRLFとなる
+                        //        //    if (isReplaceLine(line))
+                        //        //    {
+                        //        //        writer.WriteLine(CHSToCHT(line, appWord, doc));
+                        //        //    }
+                        //        //    else
+                        //        //    {
+                        //        //        continue;
+                        //        //    }
+                        //        //}
+                        //        string preString = reader.ReadToEnd();
+                        //        fs.Position = 0;
+                        //        writer.WriteLine(preString);
+                        //    }
+                        //}
+
+
+
+                        using (FileStream fileStream = File.Open(issFile.Replace("zh-CN", "zh-TW"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                        {
+                            using (reader = new StreamReader(fileStream, enc))
+                            using (writer = new StreamWriter(fileStream, enc))
+                            {
+                                string preString = reader.ReadToEnd();
+                                fileStream.Position = 0;
+                                strReplaceLine = ReplaceLine(preString, appWord, doc);
+                                writer.Write(strReplaceLine);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    // 入力ファイルを閉じる
+                    if (reader != null)
+                    {
+                        reader.Dispose();
+                    }
+
+                    // 出力ファイルを閉じる
+                    if (writer != null)
+                    {
+                        writer.Dispose();
+                    }
+
+                    //*********************************
+                    // 关闭非托管资源
+                    //*********************************
+                    object saveChange = 0;
+                    object originalFormat = Missing.Value;
+                    object routeDocument = Missing.Value;
+                    appWord.Quit(ref saveChange, ref originalFormat, ref routeDocument);
+                    GC.Collect();//进程资源释放
+
+
+                }
+
+                //*********************************
+                // Datagird表示処理
+                //*********************************
+                GetDataTable();
+
+                foreach (string resxFile in lstResxFiles)
+                {
+                    ResourceLanguage resxCnFileContent = new ResourceLanguage(resxFile);
+                    ResourceLanguage resxTwFileContent = new ResourceLanguage(resxFile.Replace("zh-CN", "zh-TW"));
+
+                    // girdDataIndex初期化
+                    girdDataIndex = 0;
+                    foreach (string itemKey in resxCnFileContent.ResourceKeys)
+                    {
+                        // ファイル内容をGirdデータに追加
+                        DataRow newRowItem;
+                        newRowItem = fileItemTable.NewRow();
+                        newRowItem["item_parent_id"] = doParentId(resxFile);
+                        newRowItem["item_key"] = itemKey;
+                        newRowItem["item_index"] = girdDataIndex + 1;
+                        newRowItem["item_simp_content"] = resxCnFileContent.GetValue(itemKey);
+                        newRowItem["item_trad_content"] = resxTwFileContent.GetValue(itemKey);
+                        newRowItem["item_file_path"] = resxFile;
+
+                        fileItemTable.Rows.Add(newRowItem);
+                        girdDataIndex++;
+                    }
+                }
+
+                DataGridBing(fileItemTable);
+
+                txtResxItemCnt.Text = Convert.ToString(resxItemCnt);
+                btnExcel.Enabled = true;
+                btnOutFolder.Enabled = true;
+
+                //メッセージボックスを表示する
+                MessageBox.Show("繁体変換処理実行完了。",
+                    "正常完了",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+            }
+            catch (Exception SimpToTwEx)
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("繁体変換処理未完成。\n" + SimpToTwEx.Message,
+                    "エラー",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+        }
+
+        #endregion
+
+        #region ファイルエクスポート
+        private void btnOutFolder_Click(object sender, EventArgs e)
+        {
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+            if (string.IsNullOrEmpty(strDestPath) || lstFileFormat.Count == 0)
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("少なくとも1つのファイルタイプを選択してください。\n または エクスポートフォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            if (lstResxFiles.Count == 0 && lstIssFiles.Count == 0 && lstJsFiles.Count == 0)
+            {
+                MessageBox.Show("繁体ファイル未作成！");
+                return;
+            }
+
+            List<string> lstFiles = new List<string>();
+
+            foreach (string fileFormat in lstFileFormat)
+            {
+
+                if (".ISS".Equals(fileFormat))
+                {
+                    lstFiles.AddRange(lstIssFiles);
+
+                }
+                else if (".RESX".Equals(fileFormat))
+                {
+
+                    lstFiles.AddRange(lstResxFiles);
+
+                }
+                else if (".JS".Equals(fileFormat))
+                {
+
+                    lstFiles.AddRange(lstJsFiles);
+                }
+
+                CopyDirectoryFile(strRootPath, strDestPath, lstFiles);
+            }
+
+            //メッセージボックスを表示する
+            MessageBox.Show("ファイルエクスポート処理実行完了。",
+                "正常完了",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         #endregion
@@ -344,7 +569,7 @@ namespace ConvertSimpTrad
             FileInfo fileInfo = new FileInfo(resxFile);
             string fileNm = Path.GetFileNameWithoutExtension(resxFile);
             strParentId = fileInfo.Directory.FullName.Replace(txtExistChFolder.Text, "") + @"\" + fileNm;
-            strParentId = strParentId.Replace(@"\",@"_").Substring(1);
+            strParentId = strParentId.Replace(@"\", @"_").Substring(1);
 
             return strParentId;
         }
@@ -500,6 +725,104 @@ namespace ConvertSimpTrad
             }
         }
 
+        private void CopyDirectoryFile(string sourceDirNm, string destDirNm, List<string> lstFiles)
+        {
+            string destDirSub = string.Empty;
+            string sourceFileDir = string.Empty;
+
+            foreach (string filePath in lstFiles)
+            {
+                sourceFileDir = new System.IO.FileInfo(filePath).DirectoryName;
+                destDirSub = destDirNm + sourceFileDir.Substring(sourceDirNm.Length);
+
+                // コピー先のディレクトリがないとき
+                if (!System.IO.Directory.Exists(destDirSub))
+                {
+                    //DirectoryInfoオブジェクトを作成する
+                    System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(destDirSub);
+
+                    di.Create();
+                }
+
+                // コピー先のディレクトリ名の末尾に"\"をつける
+                if (destDirSub[destDirSub.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+                {
+                    destDirSub += System.IO.Path.DirectorySeparatorChar;
+                }
+
+                // コピー先のディレクトリにあるファイルをコピー
+                System.IO.File.Copy(filePath.Replace("zh-CN", "zh-TW"), destDirSub + System.IO.Path.GetFileName(filePath).Replace("zh-CN", "zh-TW"), true);
+            }
+        }
+
+        private string CHSToCHT(string src, _Application appWord, Document doc)
+        {
+            string des = "";
+            appWord.Selection.TypeText(src);
+            appWord.Selection.Range.TCSCConverter(WdTCSCConverterDirection.wdTCSCConverterDirectionSCTC, true, true);
+            appWord.ActiveDocument.Select();
+            des = appWord.Selection.Text.TrimEnd('\r');
+            doc = null;
+            appWord = null;
+            return des;
+        }
+
+        ///  1行ずつ読み込んで
+        /// </summary>
+        /// <param name="strLine">ファイルの一行文字列</param>
+        /// <returns>置換文字列かどうか</returns>
+        private bool isReplaceLine(string strLine)
+        {
+            // 正規表示初期化
+            string strRegex = @"(?:ChineseSimplified).+[\w]+=+\S.*";
+            Regex rgx = new Regex(strRegex, RegexOptions.IgnoreCase);
+
+            System.Text.RegularExpressions.MatchCollection mc = rgx.Matches(strLine);
+
+            // 該当行に指定キーが存在しない場合、そのままを戻す
+            if (mc.Count == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///  1行ずつ読み込む指定文字列を置換する
+        /// </summary>
+        /// <param name="strLine">ファイルの一行文字列</param>
+        /// <returns>置換後文字列</returns>
+        private string ReplaceLine(string strLine, _Application appWord, Document doc)
+        {
+            // 正規表示初期化
+            string strRegex = @"(?:ChineseSimplified).+[\w]+=+\S.*";
+            Regex rgx = new Regex(strRegex, RegexOptions.IgnoreCase);
+
+            System.Text.RegularExpressions.MatchCollection mc = rgx.Matches(strLine);
+
+            // 該当行に指定キーが存在しない場合、そのままを戻す
+            if (mc.Count == 0)
+            {
+                return strLine;
+            }
+
+            string strContent = string.Empty;
+
+            // StringBuilderを作成する
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(strLine);
+
+            foreach (System.Text.RegularExpressions.Match m in mc)
+            {
+                strContent = CHSToCHT(m.Value, appWord, doc) + ('\r');
+                sb.Replace(m.Value, strContent);
+            }
+
+            sb.Replace("ChineseSimplified", "ChineseTraditional");
+
+            return sb.ToString();
+        }
+
         /// <summary>
         /// 导出为Excel格式
         /// </summary>
@@ -644,4 +967,3 @@ namespace ConvertSimpTrad
 
     }
 }
-
