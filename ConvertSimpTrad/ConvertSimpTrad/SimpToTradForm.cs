@@ -20,6 +20,7 @@ namespace ConvertSimpTrad
         private List<string> lstResxFiles = new List<string>();
         private List<string> lstIssFiles = new List<string>();
         private List<string> lstJsFiles = new List<string>();
+        private List<string> lstSqlFiles = new List<string>();
 
 
         public ConvertSimpTrad()
@@ -189,45 +190,56 @@ namespace ConvertSimpTrad
                     // ISSファイル変換処理
                     foreach (string issFile in lstIssFiles)
                     {
-                        //FileStream fs = new FileStream(issFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        //using (reader = new StreamReader(fs, Encoding.GetEncoding("UTF-8")))
+                        //using (FileStream fileStream = File.Open(issFile.Replace("zh-CN", "zh-TW"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
                         //{
-                        //    using (writer = new StreamWriter(issFile, false, enc))
+                        //    using (reader = new StreamReader(fileStream, enc))
+                        //    using (writer = new StreamWriter(fileStream, enc))
                         //    {
-                        //        strReplaceLine = string.Empty;
-                        //        string line = string.Empty;
-
-                        //        // 読み取り可能文字が存在しない(ファイルの末尾に到着)すると-1が返される
-                        //        //while ((line = reader.ReadLine()) != null)
-                        //        //{
-                        //        //    // 1行ずつ読み込む指定文字列を置換する
-                        //        //    // この時改行コードはWindows標準のCRLFとなる
-                        //        //    if (isReplaceLine(line))
-                        //        //    {
-                        //        //        writer.WriteLine(CHSToCHT(line, appWord, doc));
-                        //        //    }
-                        //        //    else
-                        //        //    {
-                        //        //        continue;
-                        //        //    }
-                        //        //}
                         //        string preString = reader.ReadToEnd();
-                        //        fs.Position = 0;
-                        //        writer.WriteLine(preString);
+                        //        fileStream.Position = 0;
+                        //        strReplaceLine = ReplaceLine(preString, appWord, doc);
+                        //        writer.Write(strReplaceLine);
                         //    }
                         //}
+                        UpdateContentInFile(issFile, appWord, doc, "ISS");
+                    }
 
+                    // ISSファイル変換処理
+                    foreach (string jsFile in lstJsFiles)
+                    {
+                        //using (FileStream fileStream = File.Open(issFile.Replace("zh-CN", "zh-TW"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                        //{
+                        //    using (reader = new StreamReader(fileStream, enc))
+                        //    using (writer = new StreamWriter(fileStream, enc))
+                        //    {
+                        //        string preString = reader.ReadToEnd();
+                        //        fileStream.Position = 0;
+                        //        strReplaceLine = ReplaceLine(preString, appWord, doc);
+                        //        writer.Write(strReplaceLine);
+                        //    }
+                        //}
+                        UpdateContentInFile(jsFile, appWord, doc, "JS");
+                    }
 
-
-                        using (FileStream fileStream = File.Open(issFile.Replace("zh-CN", "zh-TW"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                    // SQLファイル変換処理
+                    foreach (string sqlFile in lstSqlFiles)
+                    {
+                        if (".SQL".Equals(Path.GetExtension(sqlFile).ToUpper()))
                         {
-                            using (reader = new StreamReader(fileStream, enc))
-                            using (writer = new StreamWriter(fileStream, enc))
+                            UpdateContentInFile(sqlFile, appWord, doc, "SQL");
+                        }
+                        else if (".CMD".Equals(Path.GetExtension(sqlFile).ToUpper()))
+                        {
+                            using (FileStream fileStream = File.Open(sqlFile, FileMode.Open, FileAccess.ReadWrite))
                             {
-                                string preString = reader.ReadToEnd();
-                                fileStream.Position = 0;
-                                strReplaceLine = ReplaceLine(preString, appWord, doc);
-                                writer.Write(strReplaceLine);
+                                using (reader = new StreamReader(fileStream, System.Text.Encoding.GetEncoding("shift_jis")))
+                                using (writer = new StreamWriter(fileStream, System.Text.Encoding.GetEncoding("shift_jis")))
+                                {
+                                    string preString = reader.ReadToEnd();
+                                    fileStream.Position = 0;
+                                    strReplaceLine = preString.Replace("Chinese_PRC_CI_AS", "Chinese_Taiwan_Stroke_CI_AS");
+                                    writer.Write(strReplaceLine);
+                                }
                             }
                         }
                     }
@@ -335,7 +347,7 @@ namespace ConvertSimpTrad
                 return;
             }
 
-            if (lstResxFiles.Count == 0 && lstIssFiles.Count == 0 && lstJsFiles.Count == 0)
+            if (lstResxFiles.Count == 0 && lstIssFiles.Count == 0 && lstJsFiles.Count == 0 && lstSqlFiles.Count == 0)
             {
                 MessageBox.Show("繁体ファイル未作成！");
                 return;
@@ -361,6 +373,11 @@ namespace ConvertSimpTrad
                 {
 
                     lstFiles.AddRange(lstJsFiles);
+                }
+                else if (".SQL".Equals(fileFormat))
+                {
+
+                    lstFiles.AddRange(lstSqlFiles);
                 }
 
                 CopyDirectoryFile(strRootPath, strDestPath, lstFiles);
@@ -710,7 +727,11 @@ namespace ConvertSimpTrad
                     destFile = System.IO.Path.Combine(targetPath, fileName);
                     System.IO.File.Copy(sourceFile, destFile, true);
 
-                    sqlFileCnt += 1;
+                    lstSqlFiles.Add(destFile);
+                    if (".SQL".Equals(Path.GetExtension(destFile).ToUpper()))
+                    {
+                        sqlFileCnt += 1;
+                    }
                 }
             }
             else
@@ -821,6 +842,107 @@ namespace ConvertSimpTrad
             sb.Replace("ChineseSimplified", "ChineseTraditional");
 
             return sb.ToString();
+        }
+
+        private void UpdateContentInFile(string file, _Application appWord, Document doc, string fileType)
+        {
+            StringBuilder strB = new StringBuilder();
+
+            // StringBuilderを作成する
+            System.Text.StringBuilder strBMC = null;
+
+            //BOM無しのUTF8でテキストファイルを作成する
+            System.Text.Encoding enc = new System.Text.UTF8Encoding(true);
+
+            // 正規表示初期化
+            string strRegex = string.Empty;
+            string strRegexSql = string.Empty;
+            if ("ISS".Equals(fileType))
+            {
+                strRegex = @"(?:ChineseSimplified).+[\w]+=+\S.*";
+            }
+            else if ("JS".Equals(fileType))
+            {
+                strRegex = @"(\w+): ('[\s\S]*?')";
+            }
+            else if ("SQL".Equals(fileType))
+            {
+                strRegex = @"[\u4e00-\u9fa5]";
+                strRegexSql = @"(\/\*(\s|.)*?)|(\*\/)|(\*(\s))|--.*";
+            }
+
+            Regex rgx = new Regex(strRegex, RegexOptions.IgnoreCase);
+            Regex rgxSql = new Regex(strRegexSql, RegexOptions.IgnoreCase);
+
+            string strContent = string.Empty;
+
+            using (FileStream fin = new FileStream(file.Replace("zh-CN", "zh-TW"), FileMode.Open, FileAccess.Read))
+            using (StreamReader sr = new StreamReader(fin, Encoding.GetEncoding("UTF-8")))
+                try
+                {
+                    string strLine = sr.ReadLine();
+
+                    while (strLine != null)
+                    {
+                        if ("SQL".Equals(fileType))
+                        {
+                            // 該当行にコメントじゃなくて漢字を含める場合、繫体字になる
+                            if (!rgxSql.IsMatch(strLine) && rgx.IsMatch(strLine))
+                            {
+                                strLine = CHSToCHT(strLine, appWord, doc);
+                            }
+                        }
+                        else
+                        {
+                            System.Text.RegularExpressions.MatchCollection mc = rgx.Matches(strLine);
+
+                            // 該当行に指定キーが存在しない場合、そのままを戻す
+                            if (mc.Count != 0)
+                            {
+                                strBMC = new System.Text.StringBuilder(strLine);
+                                foreach (System.Text.RegularExpressions.Match m in mc)
+                                {
+                                    strContent = CHSToCHT(m.Value, appWord, doc);
+                                    strBMC.Replace(m.Value, strContent);
+
+                                    strLine = strBMC.ToString();
+                                }
+                            }
+                        }
+                        strB.Append(strLine + "\r\n");
+
+                        strLine = sr.ReadLine();
+                    }
+
+                    if ("ISS".Equals(fileType))
+                    {
+                        strB.Replace("ChineseSimplified", "ChineseTraditional");
+                    }
+                    else if ("SQL".Equals(fileType))
+                    {
+                        strB.Replace("Chinese_PRC_CI_AS", "Chinese_Taiwan_Stroke_CI_AS");
+                    }
+
+                    sr.Close();
+                    fin.Close();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+            using (FileStream fout = new FileStream(file.Replace("zh-CN", "zh-TW"), FileMode.Open, FileAccess.Write))
+            using (StreamWriter sw = new StreamWriter(fout, enc))
+                try
+                {
+                    sw.Write(strB.ToString());
+                    sw.Close();
+                    fout.Close();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
         }
 
         /// <summary>
