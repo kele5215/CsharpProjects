@@ -22,6 +22,8 @@ namespace ConvertSimpTrad
         private List<string> lstJsFiles = new List<string>();
         private List<string> lstSqlFiles = new List<string>();
 
+        private List<string> lstNewResxFiles = new List<string>();
+
 
         public ConvertSimpTrad()
         {
@@ -392,6 +394,82 @@ namespace ConvertSimpTrad
 
         #endregion
 
+        #region 新しいResxファイル作成
+        private void btnNewResxCreate_Click(object sender, EventArgs e)
+        {
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+            int newResxFileCnt = 0;
+
+            string str314RootPath = @"C:\work\developer\3.1.4CN(A-Law)";
+            string str314FilePath = string.Empty;
+            string str314FileContent = string.Empty;
+
+            List<string> lst314NotExistFiles = new List<string>();
+
+            if (string.IsNullOrEmpty(strDestPath))
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("エクスポートフォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            GetFilesMostDeepFromJa(strRootPath, ref newResxFileCnt);
+
+            // RESXファイル変換処理
+            foreach (string resxFile in lstNewResxFiles)
+            {
+                ResourceLanguage resxCnFileContent = new ResourceLanguage(resxFile);
+
+                str314FilePath = str314RootPath + resxFile.Substring(strDestPath.Length).Replace(".zh-CN", "");
+                if (!File.Exists(str314FilePath))
+                {
+                    lst314NotExistFiles.Add(resxFile);
+                    continue;
+                }
+
+                ResourceLanguage resx314FileContent = new ResourceLanguage(str314FilePath);
+
+                foreach (string itemKey in resxCnFileContent.ResourceKeys)
+                {
+                    if (string.IsNullOrEmpty(resxCnFileContent.GetValue(itemKey)))
+                    {
+                        continue;
+                    }
+
+                    str314FileContent = resx314FileContent.GetValue(itemKey);
+                    if (string.IsNullOrEmpty(str314FileContent))
+                    {
+                        continue;
+                    }
+
+                    resxCnFileContent.SetValue(itemKey, str314FileContent);
+                    resxCnFileContent.Save();
+
+                }
+            }
+
+            foreach (string resxFile in lst314NotExistFiles)
+            {
+                System.Console.WriteLine(resxFile);
+            }
+
+
+            //メッセージボックスを表示する
+            MessageBox.Show(string.Format("新しいResxファイルエクスポート処理実行完了。({0})件", newResxFileCnt),
+                "正常完了",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        #endregion
+
         #region dataGirdChild内容表示
 
         //点击展开事件
@@ -686,6 +764,33 @@ namespace ConvertSimpTrad
             }
         }
 
+        private void GetFilesMostDeepFromJa(string sourceDirNm, ref int resxFileCnt)
+        {
+            if (!string.IsNullOrEmpty(sourceDirNm))
+            {
+                foreach (string fp in System.IO.Directory.GetFiles(sourceDirNm))
+                {
+                    string strDot = System.IO.Path.GetExtension(fp).ToUpper();
+                    if (!fp.Contains("Assist") && !fp.Contains("Test"))
+                    {
+                        if (fp.Contains(".ja") && !".SQL".Equals(strDot))
+                        {
+                            makeZhFromJaFile(fp, ref resxFileCnt);
+                        }
+                    }
+                }
+
+                foreach (string dp in System.IO.Directory.GetDirectories(sourceDirNm))
+                {
+                    if (dp.Contains("svn") || dp.Contains("bin") || dp.Contains("obj"))
+                    {
+                        continue;
+                    }
+                    GetFilesMostDeepFromJa(dp, ref resxFileCnt);
+                }
+            }
+        }
+
         private void makeZhTwFile(string strZhCnFilePath)
         {
 
@@ -701,6 +806,46 @@ namespace ConvertSimpTrad
             // To copy a file to another location and 
             // overwrite the destination file if it already exists.
             System.IO.File.Copy(sourceFile, destFile, true);
+        }
+
+        private void makeZhFromJaFile(string strJpFilePath, ref int resxFileCnt)
+        {
+
+            string destDirSub = string.Empty;
+            string sourceFileDir = string.Empty;
+
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+
+            sourceFileDir = new System.IO.FileInfo(strJpFilePath).DirectoryName;
+            destDirSub = strDestPath + sourceFileDir.Substring(strRootPath.Length);
+
+            // コピー先のディレクトリがないとき
+            if (!System.IO.Directory.Exists(destDirSub))
+            {
+                //DirectoryInfoオブジェクトを作成する
+                System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(destDirSub);
+
+                di.Create();
+            }
+
+            // コピー先のディレクトリ名の末尾に"\"をつける
+            if (destDirSub[destDirSub.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                destDirSub += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            // コピー先のディレクトリにあるファイルをコピー
+            string strNewFilePath = destDirSub +  System.IO.Path.GetFileName(strJpFilePath).Replace(".ja", ".zh-CN");
+            System.IO.File.Copy(strJpFilePath, strNewFilePath, true);
+
+            if (".RESX".Equals(System.IO.Path.GetExtension(strNewFilePath).ToUpper()))
+            {
+                lstNewResxFiles.Add(strNewFilePath);
+                resxFileCnt += 1;
+            }
+
         }
 
         private void makeSqlTwFile(string strRootPath, ref int sqlFileCnt)

@@ -28,9 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.item_file_path = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.item_parent_id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.IsInsert = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.RowCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.EX = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.IsEx = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.item_key = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.item_index = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.item_simp_content = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.item_trad_content = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnExcel = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txtExistChFolder = new System.Windows.Forms.TextBox();
@@ -57,17 +68,7 @@
             this.txtJsFileCnt = new System.Windows.Forms.TextBox();
             this.txtResxItemCnt = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.item_file_path = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.item_parent_id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.IsInsert = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.RowCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.EX = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.IsEx = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.item_key = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.item_index = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.item_simp_content = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.item_trad_content = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btnNewResxCreate = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -95,6 +96,86 @@
             this.dataGridView1.Size = new System.Drawing.Size(1640, 726);
             this.dataGridView1.TabIndex = 0;
             this.dataGridView1.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellClick);
+            // 
+            // item_file_path
+            // 
+            this.item_file_path.HeaderText = "";
+            this.item_file_path.Name = "item_file_path";
+            this.item_file_path.Visible = false;
+            this.item_file_path.Width = 300;
+            // 
+            // ID
+            // 
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("SimSun", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            dataGridViewCellStyle5.Padding = new System.Windows.Forms.Padding(5, 0, 0, 0);
+            this.ID.DefaultCellStyle = dataGridViewCellStyle5;
+            this.ID.HeaderText = "ID";
+            this.ID.Name = "ID";
+            this.ID.Visible = false;
+            this.ID.Width = 30;
+            // 
+            // item_parent_id
+            // 
+            this.item_parent_id.HeaderText = "PARENT_ID";
+            this.item_parent_id.Name = "item_parent_id";
+            this.item_parent_id.Visible = false;
+            // 
+            // IsInsert
+            // 
+            this.IsInsert.HeaderText = "是否插入";
+            this.IsInsert.Name = "IsInsert";
+            this.IsInsert.Visible = false;
+            // 
+            // RowCount
+            // 
+            this.RowCount.HeaderText = "行数";
+            this.RowCount.Name = "RowCount";
+            this.RowCount.Visible = false;
+            // 
+            // EX
+            // 
+            dataGridViewCellStyle6.Padding = new System.Windows.Forms.Padding(5, 0, 0, 0);
+            this.EX.DefaultCellStyle = dataGridViewCellStyle6;
+            this.EX.HeaderText = "";
+            this.EX.Name = "EX";
+            this.EX.ReadOnly = true;
+            this.EX.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.EX.Width = 20;
+            // 
+            // IsEx
+            // 
+            this.IsEx.HeaderText = "是否显示";
+            this.IsEx.Name = "IsEx";
+            this.IsEx.Visible = false;
+            // 
+            // item_key
+            // 
+            this.item_key.FillWeight = 200F;
+            this.item_key.HeaderText = "key名";
+            this.item_key.Name = "item_key";
+            this.item_key.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.item_key.Width = 500;
+            // 
+            // item_index
+            // 
+            this.item_index.HeaderText = "番号";
+            this.item_index.Name = "item_index";
+            this.item_index.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.item_index.Width = 40;
+            // 
+            // item_simp_content
+            // 
+            this.item_simp_content.HeaderText = "中国語简体";
+            this.item_simp_content.Name = "item_simp_content";
+            this.item_simp_content.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.item_simp_content.Width = 550;
+            // 
+            // item_trad_content
+            // 
+            this.item_trad_content.HeaderText = "中国語繁体";
+            this.item_trad_content.Name = "item_trad_content";
+            this.item_trad_content.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.item_trad_content.Width = 550;
             // 
             // btnExcel
             // 
@@ -222,12 +303,13 @@
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.btnOutFolder);
+            this.groupBox2.Controls.Add(this.btnNewResxCreate);
             this.groupBox2.Controls.Add(this.btnSimpToTw);
             this.groupBox2.Controls.Add(this.btnTwFileMake);
             this.groupBox2.Controls.Add(this.btnExcel);
             this.groupBox2.Location = new System.Drawing.Point(680, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(288, 103);
+            this.groupBox2.Size = new System.Drawing.Size(437, 103);
             this.groupBox2.TabIndex = 6;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "処理実行";
@@ -374,85 +456,15 @@
             this.label6.Text = "Resxファイル項目件数：";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
-            // item_file_path
+            // btnNewResxCreate
             // 
-            this.item_file_path.HeaderText = "";
-            this.item_file_path.Name = "item_file_path";
-            this.item_file_path.Visible = false;
-            this.item_file_path.Width = 300;
-            // 
-            // ID
-            // 
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("SimSun", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            dataGridViewCellStyle1.Padding = new System.Windows.Forms.Padding(5, 0, 0, 0);
-            this.ID.DefaultCellStyle = dataGridViewCellStyle1;
-            this.ID.HeaderText = "ID";
-            this.ID.Name = "ID";
-            this.ID.Visible = false;
-            this.ID.Width = 30;
-            // 
-            // item_parent_id
-            // 
-            this.item_parent_id.HeaderText = "PARENT_ID";
-            this.item_parent_id.Name = "item_parent_id";
-            this.item_parent_id.Visible = false;
-            // 
-            // IsInsert
-            // 
-            this.IsInsert.HeaderText = "是否插入";
-            this.IsInsert.Name = "IsInsert";
-            this.IsInsert.Visible = false;
-            // 
-            // RowCount
-            // 
-            this.RowCount.HeaderText = "行数";
-            this.RowCount.Name = "RowCount";
-            this.RowCount.Visible = false;
-            // 
-            // EX
-            // 
-            dataGridViewCellStyle2.Padding = new System.Windows.Forms.Padding(5, 0, 0, 0);
-            this.EX.DefaultCellStyle = dataGridViewCellStyle2;
-            this.EX.HeaderText = "";
-            this.EX.Name = "EX";
-            this.EX.ReadOnly = true;
-            this.EX.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.EX.Width = 20;
-            // 
-            // IsEx
-            // 
-            this.IsEx.HeaderText = "是否显示";
-            this.IsEx.Name = "IsEx";
-            this.IsEx.Visible = false;
-            // 
-            // item_key
-            // 
-            this.item_key.FillWeight = 200F;
-            this.item_key.HeaderText = "key名";
-            this.item_key.Name = "item_key";
-            this.item_key.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.item_key.Width = 500;
-            // 
-            // item_index
-            // 
-            this.item_index.HeaderText = "番号";
-            this.item_index.Name = "item_index";
-            this.item_index.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.item_index.Width = 40;
-            // 
-            // item_simp_content
-            // 
-            this.item_simp_content.HeaderText = "中国語简体";
-            this.item_simp_content.Name = "item_simp_content";
-            this.item_simp_content.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.item_simp_content.Width = 550;
-            // 
-            // item_trad_content
-            // 
-            this.item_trad_content.HeaderText = "中国語繁体";
-            this.item_trad_content.Name = "item_trad_content";
-            this.item_trad_content.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.item_trad_content.Width = 550;
+            this.btnNewResxCreate.Location = new System.Drawing.Point(296, 18);
+            this.btnNewResxCreate.Name = "btnNewResxCreate";
+            this.btnNewResxCreate.Size = new System.Drawing.Size(134, 30);
+            this.btnNewResxCreate.TabIndex = 7;
+            this.btnNewResxCreate.Text = "新Resxファイル作成";
+            this.btnNewResxCreate.UseVisualStyleBackColor = true;
+            this.btnNewResxCreate.Click += new System.EventHandler(this.btnNewResxCreate_Click);
             // 
             // ConvertSimpTrad
             // 
@@ -524,6 +536,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn item_index;
         private System.Windows.Forms.DataGridViewTextBoxColumn item_simp_content;
         private System.Windows.Forms.DataGridViewTextBoxColumn item_trad_content;
+        private System.Windows.Forms.Button btnNewResxCreate;
 
     }
 }
