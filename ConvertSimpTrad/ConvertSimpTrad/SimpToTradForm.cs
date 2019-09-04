@@ -1008,7 +1008,7 @@ namespace ConvertSimpTrad
             }
             else if ("JS".Equals(fileType))
             {
-                strRegex = @"(\w+): ('[\s\S]*?')";
+                strRegex = @"(\w+|\w+\s+): ('[\s\S]*?')";
             }
             else if ("SQL".Equals(fileType))
             {
