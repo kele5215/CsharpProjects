@@ -1,4 +1,5 @@
 ﻿using Microsoft.Office.Interop.Word;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +24,15 @@ namespace ConvertSimpTrad
         private List<string> lstSqlFiles = new List<string>();
 
         private List<string> lstNewResxFiles = new List<string>();
+
+        private List<string> lstJaResxFiles = new List<string>();
+        private List<string> lstJaIssFiles = new List<string>();
+        private List<string> lstJaJsFiles = new List<string>();
+
+        /// <summary>
+        /// ログ出力
+        /// </summary>
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 
         public ConvertSimpTrad()
@@ -61,6 +71,11 @@ namespace ConvertSimpTrad
                 {
                     // 選択されたフォルダーパスをメッセージボックスに表示
                     txtOutFolder.Text = dlg.SelectedPath;
+                }
+                else if ("btnExistCTIFolder".Equals(btn.Name))
+                {
+                    // 選択されたフォルダーパスをメッセージボックスに表示
+                    txtExistCTIFolder.Text = dlg.SelectedPath;
                 }
                 //else
                 //{
@@ -206,7 +221,7 @@ namespace ConvertSimpTrad
                         UpdateContentInFile(issFile, appWord, doc, "ISS");
                     }
 
-                    // ISSファイル変換処理
+                    // JSファイル変換処理
                     foreach (string jsFile in lstJsFiles)
                     {
                         //using (FileStream fileStream = File.Open(issFile.Replace("zh-CN", "zh-TW"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -463,6 +478,367 @@ namespace ConvertSimpTrad
 
             //メッセージボックスを表示する
             MessageBox.Show(string.Format("新しいResxファイルエクスポート処理実行完了。({0})件", newResxFileCnt),
+                "正常完了",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        #endregion
+
+        #region ResxファイルKeyチェック処理
+        private void btnKeyCheck_Click(object sender, EventArgs e)
+        {
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+
+            // コピー先のディレクトリ名の末尾に"\"をつける
+            if (strRootPath[strRootPath.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                strRootPath += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+            string strCTIPath = this.txtExistCTIFolder.Text.Trim();
+
+            if (strCTIPath[strCTIPath.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                strCTIPath += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            int iJpResxFileCnt = 0;
+            int iJpIssFileCnt = 0;
+            int iJpJsFileCnt = 0;
+
+            string strCnFilePath = string.Empty;
+            string strTwFilePath = string.Empty;
+            string strCnFileContent = string.Empty;
+            string strTwFileContent = string.Empty;
+
+            List<string> lst34NotExistFiles = new List<string>();
+
+            string strItemTran = @"Resxファイル : {0}の項目{1}は通訳する必要がある";
+
+            if (string.IsNullOrEmpty(strRootPath))
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("既存中国フォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            if (string.IsNullOrEmpty(strCTIPath))
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("既存CTIフォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            GetJaFilesMostDeep(strCTIPath, ref iJpResxFileCnt, ref iJpIssFileCnt, ref iJpJsFileCnt);
+
+
+            // JSファイルcheck処理
+            foreach (string jsFile in lstJsFiles)
+            {
+
+                System.Console.WriteLine(jsFile);
+                try
+                {
+                    ResourceLanguage resxJpFileContent = new ResourceLanguage(jsFile);
+
+
+                    strCnFilePath = strRootPath + jsFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-CN");
+                    strTwFilePath = strRootPath + jsFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-TW");
+                    if (!File.Exists(strCnFilePath) || !File.Exists(strTwFilePath))
+                    {
+                        lst34NotExistFiles.Add(jsFile);
+                        continue;
+                    }
+
+                    ResourceLanguage resxCnFileContent = new ResourceLanguage(strCnFilePath);
+                    ResourceLanguage resxTwFileContent = new ResourceLanguage(strTwFilePath);
+
+                    foreach (string itemKey in resxJpFileContent.ResourceKeys)
+                    {
+                        if (string.IsNullOrEmpty(resxJpFileContent.GetValue(itemKey)))
+                        {
+                            continue;
+                        }
+
+                        strCnFileContent = resxCnFileContent.GetValue(itemKey);
+                        strTwFileContent = resxTwFileContent.GetValue(itemKey);
+                        if (string.IsNullOrEmpty(strCnFileContent) || string.IsNullOrEmpty(strTwFileContent))
+                        {
+                            _logger.Warn(string.Format(strItemTran, jsFile, itemKey));
+                            continue;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("例外が発生しました、下記の内容をご確認お願い致します。");
+                    _logger.Error(ex.Message + " " + ex.InnerException);
+                }
+            }
+
+            // RESXファイル変換処理
+            foreach (string resxFile in lstJaResxFiles)
+            {
+
+                System.Console.WriteLine(resxFile);
+                try
+                {
+                    ResourceLanguage resxJpFileContent = new ResourceLanguage(resxFile);
+
+                    strCnFilePath = strRootPath + resxFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-CN");
+                    strTwFilePath = strRootPath + resxFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-TW");
+                    if (!File.Exists(strCnFilePath) || !File.Exists(strTwFilePath))
+                    {
+                        lst34NotExistFiles.Add(resxFile);
+                        continue;
+                    }
+
+                    ResourceLanguage resxCnFileContent = new ResourceLanguage(strCnFilePath);
+                    ResourceLanguage resxTwFileContent = new ResourceLanguage(strTwFilePath);
+
+                    foreach (string itemKey in resxJpFileContent.ResourceKeys)
+                    {
+                        if (string.IsNullOrEmpty(resxJpFileContent.GetValue(itemKey)))
+                        {
+                            continue;
+                        }
+
+                        strCnFileContent = resxCnFileContent.GetValue(itemKey);
+                        strTwFileContent = resxTwFileContent.GetValue(itemKey);
+                        if (string.IsNullOrEmpty(strCnFileContent) || string.IsNullOrEmpty(strTwFileContent))
+                        {
+                            _logger.Warn(string.Format(strItemTran, resxFile, itemKey));
+                            continue;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("例外が発生しました、下記の内容をご確認お願い致します。");
+                    _logger.Error(ex.Message + " " + ex.InnerException);
+                }
+            }
+
+            strItemTran = @"Resxファイル : {0}の内容を通訳する必要がある";
+            foreach (string resxFile in lst34NotExistFiles)
+            {
+                _logger.Warn(string.Format(strItemTran, resxFile));
+            }
+
+            // ISSファイル変換処理
+            //foreach (string issFile in lstJaIssFiles)
+            //{
+
+            //    System.Console.WriteLine(issFile);
+            //    try
+            //    {
+            //        IssLanguage issJpFileContent = new IssLanguage(issFile);
+
+            //        strCnFilePath = strRootPath + issFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-CN");
+            //        strTwFilePath = strRootPath + issFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-TW");
+            //        if (!File.Exists(strCnFilePath) || !File.Exists(strTwFilePath))
+            //        {
+            //            _logger.Warn(string.Format(strItemTran, issFile));
+            //            continue;
+            //        }
+
+            //        IssLanguage issCnFileContent = new IssLanguage(strCnFilePath);
+            //        IssLanguage issTwFileContent = new IssLanguage(strTwFilePath);
+
+            //        foreach (string itemKey in issJpFileContent.IssKeys)
+            //        {
+            //            if (string.IsNullOrEmpty(issJpFileContent.GetValue(itemKey)))
+            //            {
+            //                continue;
+            //            }
+
+            //            strCnFileContent = issCnFileContent.GetValue(itemKey);
+            //            strTwFileContent = issCnFileContent.GetValue(itemKey);
+            //            if (string.IsNullOrEmpty(strCnFileContent) || string.IsNullOrEmpty(strTwFileContent))
+            //            {
+            //                _logger.Warn(string.Format(strItemTran, issFile, itemKey));
+            //                continue;
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _logger.Error("例外が発生しました、下記の内容をご確認お願い致します。");
+            //        _logger.Error(ex.Message + " " + ex.InnerException);
+            //    }
+            //}
+
+            //メッセージボックスを表示する
+            MessageBox.Show(string.Format("中国語Resxファイル({0})件, 中国語Issファイル({1})件 Keyチェック処理実行完了。", iJpResxFileCnt, iJpIssFileCnt),
+                "正常完了",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        #endregion
+
+        #region Resxファイル大写チェック処理
+        private void btnCapitalCheck_Click(object sender, EventArgs e)
+        {
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+
+            // コピー先のディレクトリ名の末尾に"\"をつける
+            if (strRootPath[strRootPath.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                strRootPath += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+            string strCTIPath = this.txtExistCTIFolder.Text.Trim();
+
+            if (strCTIPath[strCTIPath.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                strCTIPath += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            int iJpResxFileCnt = 0;
+            int iJpIssFileCnt = 0;
+            int iJpJsFileCnt = 0;
+
+            string strCnFilePath = string.Empty;
+            string strTwFilePath = string.Empty;
+            string strCnFileContent = string.Empty;
+            string strTwFileContent = string.Empty;
+
+            List<string> lst34NotExistFiles = new List<string>();
+
+            string strItemTran = @"Resxファイル : {0}の項目{1}は大文字になる必要がある";
+
+            if (string.IsNullOrEmpty(strRootPath))
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("既存中国フォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            if (string.IsNullOrEmpty(strCTIPath))
+            {
+                //メッセージボックスを表示する
+                MessageBox.Show("既存CTIフォルダを指定してください。",
+                    "警告",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            GetJaFilesMostDeep(strCTIPath, ref iJpResxFileCnt, ref iJpIssFileCnt, ref iJpJsFileCnt);
+
+            // RESXファイル変換処理
+            foreach (string resxFile in lstJaResxFiles)
+            {
+
+                System.Console.WriteLine(resxFile);
+                try
+                {
+                    ResourceLanguage resxJpFileContent = new ResourceLanguage(resxFile);
+
+                    strCnFilePath = strRootPath + resxFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-CN");
+                    strTwFilePath = strRootPath + resxFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-TW");
+                    if (!File.Exists(strCnFilePath) || !File.Exists(strTwFilePath))
+                    {
+                        lst34NotExistFiles.Add(resxFile);
+                        continue;
+                    }
+
+                    ResourceLanguage resxCnFileContent = new ResourceLanguage(strCnFilePath);
+                    ResourceLanguage resxTwFileContent = new ResourceLanguage(strTwFilePath);
+
+                    foreach (string itemKey in resxJpFileContent.ResourceKeys)
+                    {
+                        if (string.IsNullOrEmpty(resxJpFileContent.GetValue(itemKey)))
+                        {
+                            continue;
+                        }
+
+                        strCnFileContent = resxCnFileContent.GetValue(itemKey);
+                        strTwFileContent = resxTwFileContent.GetValue(itemKey);
+                        if (string.IsNullOrEmpty(strCnFileContent) || string.IsNullOrEmpty(strTwFileContent))
+                        {
+                            _logger.Warn(string.Format(strItemTran, resxFile, itemKey));
+                            continue;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("例外が発生しました、下記の内容をご確認お願い致します。");
+                    _logger.Error(ex.Message + " " + ex.InnerException);
+                }
+            }
+
+            strItemTran = @"Resxファイル : {0}の内容を通訳する必要がある";
+            foreach (string resxFile in lst34NotExistFiles)
+            {
+                _logger.Warn(string.Format(strItemTran, resxFile));
+            }
+
+            // ISSファイル変換処理
+            //foreach (string issFile in lstJaIssFiles)
+            //{
+
+            //    System.Console.WriteLine(issFile);
+            //    try
+            //    {
+            //        IssLanguage issJpFileContent = new IssLanguage(issFile);
+
+            //        strCnFilePath = strRootPath + issFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-CN");
+            //        strTwFilePath = strRootPath + issFile.Substring(strCTIPath.Length).Replace(".ja", ".zh-TW");
+            //        if (!File.Exists(strCnFilePath) || !File.Exists(strTwFilePath))
+            //        {
+            //            _logger.Warn(string.Format(strItemTran, issFile));
+            //            continue;
+            //        }
+
+            //        IssLanguage issCnFileContent = new IssLanguage(strCnFilePath);
+            //        IssLanguage issTwFileContent = new IssLanguage(strTwFilePath);
+
+            //        foreach (string itemKey in issJpFileContent.IssKeys)
+            //        {
+            //            if (string.IsNullOrEmpty(issJpFileContent.GetValue(itemKey)))
+            //            {
+            //                continue;
+            //            }
+
+            //            strCnFileContent = issCnFileContent.GetValue(itemKey);
+            //            strTwFileContent = issCnFileContent.GetValue(itemKey);
+            //            if (string.IsNullOrEmpty(strCnFileContent) || string.IsNullOrEmpty(strTwFileContent))
+            //            {
+            //                _logger.Warn(string.Format(strItemTran, issFile, itemKey));
+            //                continue;
+            //            }
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        _logger.Error("例外が発生しました、下記の内容をご確認お願い致します。");
+            //        _logger.Error(ex.Message + " " + ex.InnerException);
+            //    }
+            //}
+
+            //メッセージボックスを表示する
+            MessageBox.Show(string.Format("中国語Resxファイル({0})件, 中国語Issファイル({1})件 Keyチェック処理実行完了。", iJpResxFileCnt, iJpIssFileCnt),
                 "正常完了",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -791,6 +1167,80 @@ namespace ConvertSimpTrad
             }
         }
 
+        private void GetJaFilesMostDeep(string sourceDirNm, ref int resxFileCnt, ref int issFileCnt, ref int jsFileCnt)
+        {
+            if (!string.IsNullOrEmpty(sourceDirNm))
+            {
+                foreach (string fp in System.IO.Directory.GetFiles(sourceDirNm))
+                {
+                    string strDot = System.IO.Path.GetExtension(fp).ToUpper();
+
+                    if (".RESX".Equals(strDot))
+                    {
+                        if ((fp.Contains(".ja") && !fp.Contains("Aftf-JP")) && !".SQL".Equals(strDot))
+                        {
+                            lstJaResxFiles.Add(fp);
+                            resxFileCnt += 1;
+                        }
+                    }
+                    else if (".ISS".Equals(strDot))
+                    {
+                        if (fp.Contains(".ja") && !".SQL".Equals(strDot))
+                        {
+                            lstJaIssFiles.Add(fp);
+                            issFileCnt += 1;
+                        }
+                    }
+                    if (".JS".Equals(strDot))
+                    {
+                        if ((fp.Contains(".ja") && !fp.Contains("Aftf-JP")) && !".SQL".Equals(strDot))
+                        {
+                            lstJaJsFiles.Add(fp);
+                            jsFileCnt += 1;
+                        }
+                    }
+                }
+
+                foreach (string dp in System.IO.Directory.GetDirectories(sourceDirNm))
+                {
+                    if (dp.Contains("svn") || dp.Contains("bin") || dp.Contains("obj"))
+                    {
+                        continue;
+                    }
+                    GetJaFilesMostDeep(dp, ref resxFileCnt, ref issFileCnt, ref jsFileCnt);
+                }
+            }
+        }
+
+        private void GetEnFilesMostDeep(string sourceDirNm, ref int resxFileCnt)
+        {
+            if (!string.IsNullOrEmpty(sourceDirNm))
+            {
+                foreach (string fp in System.IO.Directory.GetFiles(sourceDirNm))
+                {
+                    string strDot = System.IO.Path.GetExtension(fp).ToUpper();
+
+                    if (".RESX".Equals(strDot))
+                    {
+                        if (!fp.Contains(".ja") && !fp.Contains(".zh") && !".SQL".Equals(strDot))
+                        {
+                            lstJaResxFiles.Add(fp);
+                            resxFileCnt += 1;
+                        }
+                    }
+                }
+
+                foreach (string dp in System.IO.Directory.GetDirectories(sourceDirNm))
+                {
+                    if (dp.Contains("svn") || dp.Contains("bin") || dp.Contains("obj"))
+                    {
+                        continue;
+                    }
+                    GetEnFilesMostDeep(dp, ref resxFileCnt);
+                }
+            }
+        }
+
         private void makeZhTwFile(string strZhCnFilePath)
         {
 
@@ -837,7 +1287,47 @@ namespace ConvertSimpTrad
             }
 
             // コピー先のディレクトリにあるファイルをコピー
-            string strNewFilePath = destDirSub +  System.IO.Path.GetFileName(strJpFilePath).Replace(".ja", ".zh-CN");
+            string strNewFilePath = destDirSub + System.IO.Path.GetFileName(strJpFilePath).Replace(".ja", ".zh-CN");
+            System.IO.File.Copy(strJpFilePath, strNewFilePath, true);
+
+            if (".RESX".Equals(System.IO.Path.GetExtension(strNewFilePath).ToUpper()))
+            {
+                lstNewResxFiles.Add(strNewFilePath);
+                resxFileCnt += 1;
+            }
+
+        }
+
+        private void makeZhCNFiles(string strJpFilePath, ref int resxFileCnt)
+        {
+
+            string destDirSub = string.Empty;
+            string sourceFileDir = string.Empty;
+
+            string strRootPath = this.txtExistChFolder.Text.Trim();
+            string strDestPath = this.txtOutFolder.Text.Trim();
+
+
+            sourceFileDir = new System.IO.FileInfo(strJpFilePath).DirectoryName;
+            destDirSub = strDestPath + sourceFileDir.Substring(strRootPath.Length);
+
+            // コピー先のディレクトリがないとき
+            if (!System.IO.Directory.Exists(destDirSub))
+            {
+                //DirectoryInfoオブジェクトを作成する
+                System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(destDirSub);
+
+                di.Create();
+            }
+
+            // コピー先のディレクトリ名の末尾に"\"をつける
+            if (destDirSub[destDirSub.Length - 1] != System.IO.Path.DirectorySeparatorChar)
+            {
+                destDirSub += System.IO.Path.DirectorySeparatorChar;
+            }
+
+            // コピー先のディレクトリにあるファイルをコピー
+            string strNewFilePath = destDirSub + System.IO.Path.GetFileName(strJpFilePath).Replace(".ja", ".zh-CN");
             System.IO.File.Copy(strJpFilePath, strNewFilePath, true);
 
             if (".RESX".Equals(System.IO.Path.GetExtension(strNewFilePath).ToUpper()))
@@ -1083,6 +1573,111 @@ namespace ConvertSimpTrad
                     sw.Write(strB.ToString());
                     sw.Close();
                     fout.Close();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+        }
+
+        /// <summary>
+        /// 判断字符是否为大写字母
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>       
+        private int CompareChar(char c)
+        {
+            if (c > 'A' && c < 'Z')
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        private void JsFileAnalysis(string file, string fileType)
+        {
+            StringBuilder strB = new StringBuilder();
+
+            // StringBuilderを作成する
+            System.Text.StringBuilder strBMC = null;
+
+            //BOM無しのUTF8でテキストファイルを作成する
+            System.Text.Encoding enc = new System.Text.UTF8Encoding(true);
+
+            // 正規表示初期化
+            string strRegex = string.Empty;
+            string strRegexSql = string.Empty;
+            if ("ISS".Equals(fileType))
+            {
+                strRegex = @"(?:ChineseSimplified).+[\w]+=+\S.*";
+            }
+            else if ("JS".Equals(fileType))
+            {
+                strRegex = @"(\w+|\w+\s+): ('[\s\S]*?')";
+            }
+            else if ("SQL".Equals(fileType))
+            {
+                strRegex = @"[\u4e00-\u9fa5]";
+                strRegexSql = @"(\/\*(\s|.)*?)|(\*\/)|(\*(\s))|--.*";
+            }
+
+            Regex rgx = new Regex(strRegex, RegexOptions.IgnoreCase);
+            Regex rgxSql = new Regex(strRegexSql, RegexOptions.IgnoreCase);
+
+            string strContent = string.Empty;
+
+            using (FileStream fin = new FileStream(file, FileMode.Open, FileAccess.Read))
+            using (StreamReader sr = new StreamReader(fin, Encoding.GetEncoding("UTF-8")))
+                try
+                {
+                    string strLine = sr.ReadLine();
+
+                    while (strLine != null)
+                    {
+                        if ("SQL".Equals(fileType))
+                        {
+                            // 該当行にコメントじゃなくて漢字を含める場合、繫体字になる
+                            if (!rgxSql.IsMatch(strLine) && rgx.IsMatch(strLine))
+                            {
+                                //strLine = CHSToCHT(strLine, appWord, doc);
+                            }
+                        }
+                        else
+                        {
+                            System.Text.RegularExpressions.MatchCollection mc = rgx.Matches(strLine);
+
+                            // 該当行に指定キーが存在しない場合、そのままを戻す
+                            if (mc.Count != 0)
+                            {
+                                strBMC = new System.Text.StringBuilder(strLine);
+                                foreach (System.Text.RegularExpressions.Match m in mc)
+                                {
+                                    //strContent = CHSToCHT(m.Value, appWord, doc);
+                                    strBMC.Replace(m.Value, strContent);
+
+                                    strLine = strBMC.ToString();
+                                }
+                            }
+                        }
+                        strB.Append(strLine + "\r\n");
+
+                        strLine = sr.ReadLine();
+                    }
+
+                    if ("ISS".Equals(fileType))
+                    {
+                        strB.Replace("ChineseSimplified", "ChineseTraditional");
+                    }
+                    else if ("SQL".Equals(fileType))
+                    {
+                        strB.Replace("Chinese_PRC_CI_AS", "Chinese_Taiwan_Stroke_CI_AS");
+                    }
+
+                    sr.Close();
+                    fin.Close();
                 }
                 catch (Exception ex)
                 {

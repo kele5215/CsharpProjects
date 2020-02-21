@@ -53,7 +53,10 @@ namespace JapaneseDectector
             lstFilesChOrJp = new List<string>();
             foreach (string str in lstFiles)
             {
-                GetJapaneseFiles(str, ref fileCount);
+                if (str.Contains("zh"))
+                {
+                    GetJapaneseFiles(str, ref fileCount);
+                }
             }
 
             foreach (string strr in lstResult)
